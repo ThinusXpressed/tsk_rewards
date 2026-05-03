@@ -1,0 +1,22 @@
+name: Daily Absence Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 02:00 SAST (UTC+2)
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  check-absences:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run absence check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            https://tsk.bitcoinekasi.xyz/api/admin/check-absences \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "HTTP status: $response"
+          if [ "$response" != "200" ]; then
+            echo "Absence check failed with status $response"
+            exit 1
+          fi
